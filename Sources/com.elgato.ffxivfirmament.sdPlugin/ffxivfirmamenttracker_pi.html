@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8" />
+      <title>FFXIV Firmament Tracker</title>
+      <link rel="stylesheet" href="sdpi.css">
+   </head>
+   <body>
+      <div class="sdpi-item" id="select_single">
+         <div class="sdpi-item-label">Server</div>
+         <select class="sdpi-item-value select" id="Server" onchange="sendValueToPlugin(event.target.value, 'Server'); saveValue(event.target.value, 'Server')">
+            <optgroup label="Aether">
+               <option value="Adamantoise">Adamantoise</option>
+               <option value="Cactuar">Cactuar</option>
+               <option value="Faerie">Faerie</option>
+               <option value="Gilgamesh">Gilgamesh</option>
+               <option value="Jenova">Jenova</option>
+               <option value="Midgardsormr">Midgardsormr</option>
+               <option value="Sargatanas">Sargatanas</option>
+               <option value="Siren">Siren</option>
+            </optgroup>
+            <optgroup label="Primal">
+               <option value="Behemoth">Behemoth</option>
+               <option value="Excalibur">Excalibur</option>
+               <option value="Exodus">Exodus</option>
+               <option value="Famfrit">Famfrit</option>
+               <option value="Hyperion">Hyperion</option>
+               <option value="Lamia">Lamia</option>
+               <option value="Leviathan">Leviathan</option>
+               <option value="Ultros">Ultros</option>
+            </optgroup>
+            <optgroup label="Crystal">
+               <option value="Balmung">Balmung</option>
+               <option value="Brynhildr">Brynhildr</option>
+               <option value="Coeurl">Coeurl</option>
+               <option value="Diabolos">Diabolos</option>
+               <option value="Goblin">Goblin</option>
+               <option value="Malboro">Malboro</option>
+               <option value="Mateus">Mateus</option>
+               <option value="Zalera">Zalera</option>
+            </optgroup>
+         </select>
+      </div>
+      <script>
+         // this is our global websocket, used to communicate from/to Stream Deck software
+         // and some info about our plugin, as sent by Stream Deck software
+         var websocket = null,
+         uuid = null,
+         actionInfo = {};
+         
+         function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
+             uuid = inUUID;
+             // please note: the incoming arguments are of type STRING, so
+             // in case of the inActionInfo, we must parse it into JSON first
+             actionInfo = JSON.parse(inActionInfo); // cache the info
+             websocket = new WebSocket('ws://localhost:' + inPort);
+         
+             // if connection was established, the websocket sends
+             // an 'onopen' event, where we need to register our PI
+             websocket.onopen = function () {
+                 var json = {
+                     event:  inRegisterEvent,
+                     uuid:   inUUID
+                 };
+                 // register property inspector to Stream Deck
+                 websocket.send(JSON.stringify(json));
+         
+                 json = {
+                     "event": "getSettings",
+                     "context": uuid,
+                 };
+                 websocket.send(JSON.stringify(json));
+             }
+         
+         websocket.onmessage = function (evt) {
+         // Received message from Stream Deck
+         const jsonObj = JSON.parse(evt.data);
+         if (jsonObj.event === 'didReceiveSettings') {
+             const payload = jsonObj.payload.settings;
+         
+             document.getElementById('Server').value !== undefined ? document.getElementById('Server').value = payload.Server : document.getElementById('Server').value = "";
+             sendValueToPlugin(payload.Server, "Server");
+         }
+         };
+         }
+         
+         // our method to pass values to the plugin
+         function sendValueToPlugin(value, param) {
+             if (websocket) {
+                 const json = {
+                         "action": actionInfo['action'],
+                         "event": "sendToPlugin",
+                         "context": uuid,
+                         "payload": {
+                             [param] : value
+                         }
+                  };
+                  websocket.send(JSON.stringify(json));
+             }
+         }
+         
+         function saveValue(value, param) {
+             if (websocket) {
+                 const json = {
+                         "event": "setSettings",
+                         "context": uuid,
+                         "payload": {
+                             [param] : value
+                         }
+                  };
+                  websocket.send(JSON.stringify(json));
+             }
+         }
+      </script>
+   </body>
+</html>
