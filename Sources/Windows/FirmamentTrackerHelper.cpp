@@ -83,6 +83,7 @@ bool FirmamentTrackerHelper::ReadFirmamentHTML()
 **/
 bool FirmamentTrackerHelper::GetFirmamentProgress(const std::string & server, std::string& progress)
 {
+	bool isSuccessful = false;
 	mHtmlMutex.lock();
 	if (mHttpCode == 200)
 	{
@@ -90,31 +91,50 @@ bool FirmamentTrackerHelper::GetFirmamentProgress(const std::string & server, st
 		std::size_t serverPos = mHttpData.get()->find(server);
 		if (serverPos != std::string::npos)
 		{
-			// find the size of progress bar
-			std::string keyWord = "width: ";
-			std::size_t progressPos = mHttpData.get()->find("width: ", serverPos);
-			if (progressPos != std::string::npos)
+			// find the end of this html block
+			std::size_t liClose = mHttpData.get()->find("</li>", serverPos);
+			if (liClose != std::string::npos)
 			{
-				// find the end % sign
-				std::size_t startPos = progressPos + keyWord.length();
-				std::size_t endPos = mHttpData.get()->find("%", startPos);
-				if (startPos < endPos)
+				std::string htmlBlock = mHttpData.get()->substr(serverPos, liClose - serverPos);
+
+				// check for completion string
+				const std::string completionWord = "Works Complete";
+				std::size_t completionPos = htmlBlock.find(completionWord);
+				if (completionPos != std::string::npos)
 				{
-					// extract the substring
-					progress = mHttpData.get()->substr(startPos, endPos-startPos+1);
-					mHtmlMutex.unlock();
-					return true;
+					progress = "Completed";
+					isSuccessful = true;
+				}
+
+				// find the size of progress bar if not completed
+				const std::string keyWord = "width: ";
+				std::size_t progressPos = htmlBlock.find("width: ");
+				if (progressPos != std::string::npos)
+				{
+					// find the end % sign
+					std::size_t startPos = progressPos + keyWord.length();
+					std::size_t endPos = htmlBlock.find("%", startPos);
+					if (startPos < endPos)
+					{
+						// extract the substring
+						progress = htmlBlock.substr(startPos, endPos - startPos + 1);
+						isSuccessful = true;
+					}
 				}
 			}
 		}
 
-		// http was good but something went wrong...
-		progress = "No Data";
+		if (!isSuccessful)
+		{
+			// http was good but something went wrong...
+			progress = "No Data";
+		}
 	}
-
-	// http read was bad
-	progress = "Error: " + std::to_string(mHttpCode);
+	else {
+		// http read was bad
+		progress = "Error: " + std::to_string(mHttpCode);
+	}
 	mHtmlMutex.unlock();
 
-	return false;
+	return isSuccessful;
 }
