@@ -9,6 +9,7 @@
       <div class="sdpi-item" id="select_single">
          <div class="sdpi-item-label">Server</div>
          <select class="sdpi-item-value select" id="Server" onchange="sendValueToPlugin(event.target.value, 'Server'); saveValue(event.target.value, 'Server')">
+            <option disabled="disabled" selected="selected" hidden="hidden"></option>
             <optgroup label="Aether">
                <option value="Adamantoise">Adamantoise</option>
                <option value="Cactuar">Cactuar</option>
@@ -72,19 +73,20 @@
                  websocket.send(JSON.stringify(json));
              }
          
-         websocket.onmessage = function (evt) {
-         // Received message from Stream Deck
-         const jsonObj = JSON.parse(evt.data);
-         if (jsonObj.event === 'didReceiveSettings') {
-             const payload = jsonObj.payload.settings;
+             // retrieve saved settings if there are any
+             websocket.onmessage = function (evt) {
+                 // Received message from Stream Deck
+                 const jsonObj = JSON.parse(evt.data);
+                 if (jsonObj.event === 'didReceiveSettings') {
+                     const payload = jsonObj.payload.settings;
          
-             document.getElementById('Server').value !== undefined ? document.getElementById('Server').value = payload.Server : document.getElementById('Server').value = "";
-             sendValueToPlugin(payload.Server, "Server");
-         }
-         };
+                     document.getElementById('Server').value !== undefined ? document.getElementById('Server').value = payload.Server : document.getElementById('Server').value = "";
+                     sendValueToPlugin(payload.Server, "Server");
+                 }
+             };
          }
          
-         // our method to pass values to the plugin
+         // pass values to the plugin
          function sendValueToPlugin(value, param) {
              if (websocket) {
                  const json = {
@@ -99,6 +101,7 @@
              }
          }
          
+         // saves a payload
          function saveValue(value, param) {
              if (websocket) {
                  const json = {
