@@ -49,7 +49,7 @@ public:
 	}
 
 	/**
-		@brief Unlocks mutex and stops/joins the thread
+		@brief starts the callback loop
 
 		@param[in] triggerMinuteOfTheHour the minute of the hour to trigger on (0-59)
 		@param[in] func the function to trigger

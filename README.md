@@ -24,6 +24,8 @@ In the Release folder, you can find the file `com.elgato.ffxivfirmament.streamDe
 
 Folder: https://github.com/momokotomoko/ffxivStreamDeckFirmamentTrackerPlugin/Release
 
+If an installation was previously present, you must delete the plugin folder located in Elgato's AppData folder. For example: `C:\Users\<username>\AppData\Roaming\Elgato\StreamDeck\Plugins`
+
 ## Settings
 
 `Title`
