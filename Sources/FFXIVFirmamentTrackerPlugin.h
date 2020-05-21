@@ -35,11 +35,13 @@ public:
 	void SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID) override;
 private:
 	
-	void UpdateUI();
+	void UpdateUI(const std::string& inContext);
 	
 	std::mutex mVisibleContextsMutex;
 	std::unordered_map<std::string, std::string> mContextServerMap;
 	
 	FirmamentTrackerHelper *mFirmamentTrackerHelper = nullptr;
 	CallBackTimer *mTimer = nullptr;
+
+	void startTimers();
 };

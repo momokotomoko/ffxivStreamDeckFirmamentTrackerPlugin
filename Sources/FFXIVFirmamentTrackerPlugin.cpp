@@ -25,21 +25,7 @@ FFXIVFirmamentTrackerPlugin::FFXIVFirmamentTrackerPlugin()
 	mFirmamentTrackerHelper = new FirmamentTrackerHelper();
 	mTimer = new CallBackTimer();
 
-	// timer that is called every hour on the 1 minute mark to grab raw html
-	const int triggerMinuteOfTheHour = { 1 };
-	mTimer->start(triggerMinuteOfTheHour, [this]()
-	{
-		#ifdef LOGGING
-			mConnectionManager->LogMessage("Reading HTML...");
-		#endif
-		// read HTML and update UI once triggered
-		bool status = mFirmamentTrackerHelper->ReadFirmamentHTML();
-		this->UpdateUI();
-		#ifdef LOGGING
-			mConnectionManager->LogMessage("Reading status: " + std::to_string(status));
-		#endif
-		return status;
-	});
+	mFirmamentTrackerHelper->ReadFirmamentHTML();
 }
 
 FFXIVFirmamentTrackerPlugin::~FFXIVFirmamentTrackerPlugin()
@@ -60,40 +46,71 @@ FFXIVFirmamentTrackerPlugin::~FFXIVFirmamentTrackerPlugin()
 }
 
 /**
+	@brief Starts the callback timers for this plugin
+**/
+void FFXIVFirmamentTrackerPlugin::startTimers()
+{
+	mTimer->stop();
+
+    #ifdef LOGGING
+	mConnectionManager->LogMessage("Starting timers...");
+    #endif
+
+	// timer that is called every hour on the 1 minute mark to grab raw html
+	std::set<int> triggerMinuteOfTheHour = { 1 };
+	mTimer->start(triggerMinuteOfTheHour, [this]()
+		{
+            #ifdef LOGGING
+			mConnectionManager->LogMessage("Reading HTML...");
+            #endif
+			// read HTML and update UI once triggered
+			bool status = mFirmamentTrackerHelper->ReadFirmamentHTML();
+
+			mVisibleContextsMutex.lock();
+			for (const auto& context : mContextServerMap)
+				this->UpdateUI(context.first);
+			mVisibleContextsMutex.unlock();
+            #ifdef LOGGING
+			mConnectionManager->LogMessage("Reading status: " + std::to_string(status));
+            #endif
+			return status;
+		});
+}
+
+/**
 	@brief Updates all visible contexts for this app by parsing firmament progress from stored raw html
 **/
-void FFXIVFirmamentTrackerPlugin::UpdateUI()
+void FFXIVFirmamentTrackerPlugin::UpdateUI(const std::string& inContext)
 {
+	// warning: lock mVisibleContextsMutex before calling!
+
 	if(mConnectionManager != nullptr)
 	{
 		bool isSuccessful = true;
-		mVisibleContextsMutex.lock();
 		// go through all our visible contexts and set the title to show the firmament progress
-		for (const auto & context : mContextServerMap)
+		if (mContextServerMap.find(inContext) != mContextServerMap.end())
 		{
-			if (context.second.length() > 0)
+			if (mContextServerMap.at(inContext).length() > 0)
 			{
 				std::string progress;
-				if (!mFirmamentTrackerHelper->GetFirmamentProgress(context.second, progress))
+				if (!mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext), progress))
 				{
 					isSuccessful = false;
 				}
 				// Server name \n progress%
-				mConnectionManager->SetTitle(context.second + "\n" + progress, context.first, kESDSDKTarget_HardwareAndSoftware);
+				mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
 			}
 		}
-		mVisibleContextsMutex.unlock();
 
 		// re-load html if something failed
 		if (!isSuccessful)
 		{
 			#ifdef LOGGING
-				mConnectionManager->LogMessage("Something went wrong parsing progress percentage from HTML, attempt reloading page...");
+			mConnectionManager->LogMessage("Something went wrong parsing progress percentage from HTML, attempt reloading page...");
 			#endif
 			mTimer->wake();
 		}
 	}
-
 }
 
 
@@ -122,11 +139,19 @@ void FFXIVFirmamentTrackerPlugin::WillAppearForAction(const std::string& inActio
 
 	// Remember the context and the saved server name for this app
 	mVisibleContextsMutex.lock();
+	// if this is the first plugin to be displayed, boot up the timers
+	bool isEmpty = mContextServerMap.empty();
+	if (isEmpty)
+		startTimers();
+
 	mContextServerMap.insert({ inContext, server });
-	mVisibleContextsMutex.unlock();
 
 	// update the UI with firmament percentages
-	this->UpdateUI();
+	if (!isEmpty)
+	{
+		this->UpdateUI(inContext);
+	}
+	mVisibleContextsMutex.unlock();
 }
 
 /**
@@ -137,6 +162,12 @@ void FFXIVFirmamentTrackerPlugin::WillDisappearForAction(const std::string& inAc
 	// Remove this particular context so we don't have to process it when updating UI
 	mVisibleContextsMutex.lock();
 	mContextServerMap.erase(inContext);
+
+	// if we have no active plugin displayed, kill the timers to save cpu cycles
+	if (mContextServerMap.empty())
+	{
+		mTimer->stop();
+	}
 	mVisibleContextsMutex.unlock();
 }
 
@@ -161,8 +192,7 @@ void FFXIVFirmamentTrackerPlugin::SendToPlugin(const std::string& inAction, cons
 	{
 		mContextServerMap.at(inContext) = inPayload["Server"].get<std::string>();
 	}
-	mVisibleContextsMutex.unlock();
-
 	// update UI after changing server for this app
-	this->UpdateUI();
+	this->UpdateUI(inContext);
+	mVisibleContextsMutex.unlock();
 }
