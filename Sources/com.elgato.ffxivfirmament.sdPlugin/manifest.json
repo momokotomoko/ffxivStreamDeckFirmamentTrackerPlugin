@@ -23,7 +23,7 @@
   "Name": "FFXIV Firmament Tracker", 
   "Icon": "pluginIcon", 
   "URL": "https://github.com/momokotomoko/ffxivStreamDeckFirmamentTrackerPlugin", 
-  "Version": "1.01",
+  "Version": "1.02",
   "OS": [
     {
         "Platform": "windows", 
