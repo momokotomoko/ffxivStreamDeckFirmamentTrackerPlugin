@@ -13,138 +13,12 @@
 #include <atomic>
 
 #include "Windows/FirmamentTrackerHelper.h"
+#include "Windows/CallBackTimer.h"
 
 #include "Common/ESDConnectionManager.h"
 
 //#define LOGGING
 
-/**
-	@brief Timer that triggers on a specified minute of every hour, or on wake
-**/
-class CallBackTimer
-{
-public:
-	CallBackTimer()
-	{
-		lock();
-	}
-
-	~CallBackTimer()
-	{
-		stop();
-	}
-
-	/**
-		@brief Unlocks mutex and stops/joins the thread
-	**/
-	void stop()
-	{
-		running = false;
-		if (locked)
-		{
-			unlock();
-		}
-		if (thd.joinable())
-			thd.join();
-	}
-
-	/**
-		@brief starts the callback loop
-
-		@param[in] triggerMinuteOfTheHour the minute of the hour to trigger on (0-59)
-		@param[in] func the function to trigger
-	**/
-	void start(unsigned int triggerMinuteOfTheHour, std::function<bool(void)> func)
-	{
-		triggerMinuteOfTheHour = min(0, triggerMinuteOfTheHour);
-		running = true;
-
-		// start the timer thread
-		thd = std::thread([this, triggerMinuteOfTheHour, func]()
-			{
-				while (running)
-				{
-					// get current time and set the minute to the trigger minute
-					time_t now = time(0);
-					struct tm newTime {};
-					localtime_s(&newTime, &now);
-					newTime.tm_sec = 0;
-					newTime.tm_min = triggerMinuteOfTheHour;
-					time_t nextTriggerTime = mktime(&newTime);
-
-					// if the new time is behind us, it means the next trigger minute is in an hour
-					if (difftime(nextTriggerTime, now) < 1)
-					{
-						nextTriggerTime += 3600; // increment by an hour
-					}
-
-					// call the desired function
-					int status = func();
-
-					int waitTime = 0;
-					if (status == false) // function failed, retry in 5s
-					{
-						waitTime = 5;
-					}
-					else
-					{
-						// function may be slow, recompute current time, diff maybe be negative which in that case we immeadiatly unlock mutex
-						now = time(0);
-						waitTime = (int)(difftime(nextTriggerTime, now));
-					}
-
-					// wait
-					if (timerMutex.try_lock_for(std::chrono::seconds(waitTime)))
-					{
-						unlock();
-					}
-					if (!locked)
-					{
-						lock();
-					}
-				}
-			});
-	}
-
-	/**
-		@brief checks if thread is running
-
-		@return true if thread is running
-	**/
-	bool is_running() const noexcept
-	{
-		return (running && thd.joinable());
-	}
-
-	/**
-		@brief force a wakeup even if trigger time not met
-	**/
-	void wake()
-	{
-		if (is_running() && locked)
-		{
-			unlock();
-		}
-	}
-private:
-	std::atomic_bool running = false;
-	std::thread thd;
-
-	std::timed_mutex timerMutex;
-	std::atomic_bool locked = false;
-
-	void lock()
-	{
-		timerMutex.lock();
-		locked = true;
-	}
-
-	void unlock()
-	{
-		locked = false;
-		timerMutex.unlock();
-	}
-};
 
 FFXIVFirmamentTrackerPlugin::FFXIVFirmamentTrackerPlugin()
 {
@@ -152,7 +26,7 @@ FFXIVFirmamentTrackerPlugin::FFXIVFirmamentTrackerPlugin()
 	mTimer = new CallBackTimer();
 
 	// timer that is called every hour on the 1 minute mark to grab raw html
-	const int triggerMinuteOfTheHour = 1;
+	const int triggerMinuteOfTheHour = { 1 };
 	mTimer->start(triggerMinuteOfTheHour, [this]()
 	{
 		#ifdef LOGGING

@@ -187,6 +187,7 @@
     <ClInclude Include="..\Common\ESDSDKDefines.h" />
     <ClInclude Include="..\Common\ESDUtilities.h" />
     <ClInclude Include="..\FFXIVFirmamentTrackerPlugin.h" />
+    <ClInclude Include="CallBackTimer.h" />
     <ClInclude Include="FirmamentTrackerHelper.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
