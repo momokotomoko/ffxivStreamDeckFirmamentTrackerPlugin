@@ -100,7 +100,7 @@ void FFXIVFirmamentTrackerPlugin::UpdateUI()
 void FFXIVFirmamentTrackerPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	// if key is pressed, open firmament page
-	ShellExecuteA(NULL, "open", mFirmamentTrackerHelper->html.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	mConnectionManager->OpenUrl(mFirmamentTrackerHelper->html);
 }
 
 void FFXIVFirmamentTrackerPlugin::KeyUpForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
