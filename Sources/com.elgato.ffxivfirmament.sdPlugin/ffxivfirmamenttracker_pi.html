@@ -123,7 +123,7 @@
          }
 
          // inserts a radio button to buttons with specified id, with specified button name if it doesn't already exist
-         function insertRadioButton(id, name) {
+         function insertRadioButton(id, name, checked) {
              const radioEl = document.getElementById(id);
 
              if (radioEl.querySelector("input[id='" + name +"']") == null) {
@@ -131,15 +131,17 @@
                  newInput.id = name;
                  newInput.type = "radio";
                  newInput.name = "rdio";
+                 if (checked != null) {
+                     newInput.checked = true;
+                 }
 
                  newLabel = document.createElement('label');
-                 newLabel.for = name;
-                 newLabel.class = "sdpi-item-label";
-                 newLabel.textContent = name;
-                 newLabel.appendChild(document.createElement('span'));
+                 newLabel.setAttribute("for", name);
+                 newLabel.setAttribute("class", "sdpi-item-label");
+                 newLabel.innerHTML = "<span></span>" + name;
 
                  newSpan = document.createElement('span');
-                 newSpan.class = "sdpi-item-child";
+                 newSpan.setAttribute("class", "sdpi-item-child");
                  newSpan.appendChild(newInput);
                  newSpan.appendChild(newLabel);
 
