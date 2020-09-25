@@ -32,9 +32,13 @@ If an installation was previously present, you must delete the plugin folder loc
 
 The title is automatically set by the plugin to display the server name and progress percentage.
 
+`Server Select`
+
+Select a server from the dropdown menu to track.
+
 `Server`
 
-Select a server to track.
+Textbox where you can type the name of the server to track, in case it is not in the dropdown menu.
 
 `Font`
 

@@ -37,9 +37,39 @@ bool FirmamentTrackerHelper::ReadFirmamentHTML()
 		isSuccess = parseRestorationServerHtml(mServerHierarchy, mServerStatus, mDom);
 	}
 
+	mIsSuccess = isSuccess;
+
 	mHtmlMutex.unlock();
 
 	return isSuccess;
+}
+
+/**
+	@brief Check to see if the html read was good
+
+	@return true if html was successfully read
+**/
+bool FirmamentTrackerHelper::isHtmlGood()
+{
+	mHtmlMutex.lock();
+	bool isSuccess = mIsSuccess;
+	mHtmlMutex.unlock();
+
+	return isSuccess;
+}
+
+/**
+	@brief Get the server hierarchy
+
+	@return server hierarchy
+**/
+std::vector<FirmamentTrackerHelper::restorationRegion> FirmamentTrackerHelper::getServerHierarchy()
+{
+	mHtmlMutex.lock();
+	std::vector<restorationRegion> serverHierarchy = mServerHierarchy;
+	mHtmlMutex.unlock();
+
+	return serverHierarchy;
 }
 
 /**

@@ -38,6 +38,10 @@ private:
 	void UpdateUI(const std::string& inContext);
 	
 	std::mutex mVisibleContextsMutex;
+
+	// on first time the app appears we need these to trigger sending global settings
+	std::mutex mInitMutex;
+
 	std::unordered_map<std::string, std::string> mContextServerMap;
 	
 	FirmamentTrackerHelper *mFirmamentTrackerHelper = nullptr;

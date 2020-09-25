@@ -18,20 +18,6 @@
 class FirmamentTrackerHelper
 {
 public:
-	const std::string html = "https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report";
-	FirmamentTrackerHelper();
-	~FirmamentTrackerHelper() {};
-
-	bool GetFirmamentProgress(const std::string& server, std::string& progress);
-	bool ReadFirmamentHTML();
-
-private:
-	std::unique_ptr<std::string> mHttpData; // raw html string
-	long mHttpCode = 0; // error code from curl after downloading html string
-	tree<htmlcxx::HTML::Node> mDom; // tree structure for parsed html data
-
-	std::mutex mHtmlMutex;
-
 	/*
 		struct to store server hierarchy
 		Hierarchy: Region->DC->server
@@ -43,11 +29,8 @@ private:
 	struct restorationRegion
 	{
 		std::string name = "";
-		std::map<std::string, restorationDC> dc = {};
+		std::map<std::string, FirmamentTrackerHelper::restorationDC> dc = {};
 	};
-	// the html doesn't wrap the regions, it's just in order that it appears,
-	// so don't use unordered_map here since we need to preserve the order we loaded the regions
-	std::vector<restorationRegion> mServerHierarchy = {};
 
 	// struct to store parsed server data
 	struct restorationServerStatus
@@ -58,6 +41,28 @@ private:
 		std::string text = "";
 		bool isValid = false;
 	};
+
+	const std::string html = "https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report";
+	FirmamentTrackerHelper();
+	~FirmamentTrackerHelper() {};
+
+	bool GetFirmamentProgress(const std::string& server, std::string& progress);
+	bool ReadFirmamentHTML();
+	bool isHtmlGood();
+
+	std::vector<FirmamentTrackerHelper::restorationRegion> getServerHierarchy();
+
+private:
+	std::unique_ptr<std::string> mHttpData; // raw html string
+	long mHttpCode = 0; // error code from curl after downloading html string
+	tree<htmlcxx::HTML::Node> mDom; // tree structure for parsed html data
+	bool mIsSuccess = false; // status of previous read
+
+	std::mutex mHtmlMutex;
+
+	// the html doesn't wrap the regions, it's just in order that it appears,
+	// so don't use unordered_map here since we need to preserve the order we loaded the regions
+	std::vector<restorationRegion> mServerHierarchy = {};
 	std::unordered_map<std::string, restorationServerStatus> mServerStatus;
 
 	restorationServerStatus parseServerStatus(const std::string& server, tree<htmlcxx::HTML::Node>& dom);

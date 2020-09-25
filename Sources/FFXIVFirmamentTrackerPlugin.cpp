@@ -24,8 +24,6 @@ FFXIVFirmamentTrackerPlugin::FFXIVFirmamentTrackerPlugin()
 {
 	mFirmamentTrackerHelper = new FirmamentTrackerHelper();
 	mTimer = new CallBackTimer();
-
-	mFirmamentTrackerHelper->ReadFirmamentHTML();
 }
 
 FFXIVFirmamentTrackerPlugin::~FFXIVFirmamentTrackerPlugin()
@@ -63,17 +61,22 @@ void FFXIVFirmamentTrackerPlugin::startTimers()
             #ifdef LOGGING
 			mConnectionManager->LogMessage("Reading HTML...");
             #endif
-			// read HTML and update UI once triggered
-			bool status = mFirmamentTrackerHelper->ReadFirmamentHTML();
 
+			// read HTML and update UI once triggered
 			mVisibleContextsMutex.lock();
+			for (const auto& context : mContextServerMap)
+				mConnectionManager->SetTitle(context.second + "\nLoading", context.first, kESDSDKTarget_HardwareAndSoftware);
+
+			bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML();
+
 			for (const auto& context : mContextServerMap)
 				this->UpdateUI(context.first);
 			mVisibleContextsMutex.unlock();
+
             #ifdef LOGGING
 			mConnectionManager->LogMessage("Reading status: " + std::to_string(status));
             #endif
-			return status;
+			return isSuccess;
 		});
 }
 
@@ -93,13 +96,15 @@ void FFXIVFirmamentTrackerPlugin::UpdateUI(const std::string& inContext)
 			if (mContextServerMap.at(inContext).length() > 0)
 			{
 				std::string progress;
-				if (!mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext), progress))
-				{
-					isSuccessful = false;
-				}
+				bool isServerParsed = mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext), progress);
 				// Server name \n progress%
-				mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
+				if (isServerParsed)
+					mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
+				else
+					mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\nNo Data", inContext, kESDSDKTarget_HardwareAndSoftware);
 			}
+			else
+				mConnectionManager->SetTitle("", inContext, kESDSDKTarget_HardwareAndSoftware);
 		}
 
 		// re-load html if something failed
@@ -186,6 +191,34 @@ void FFXIVFirmamentTrackerPlugin::DeviceDidDisconnect(const std::string& inDevic
 **/
 void FFXIVFirmamentTrackerPlugin::SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
+	// check for the init signal
+	if (inPayload.find("Init") != inPayload.end())
+	{
+		// if HTML read was good, setup the dropdown menu by sending all possible settings
+		mInitMutex.lock();
+		if (mFirmamentTrackerHelper->isHtmlGood())
+		{
+			json j;
+			std::vector<FirmamentTrackerHelper::restorationRegion> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
+			for (const auto region : serverHierarchy)
+			{
+				for (const auto dc : region.dc)
+				{
+					for (const auto server : dc.second.servers)
+					{
+						j["menu"][region.name][dc.first][server];
+					}
+				}
+			}
+
+			mConnectionManager->SetGlobalSettings(j);
+			#ifdef LOGGING
+			mConnectionManager->LogMessage(j.dump(4));
+			#endif
+		}
+		mInitMutex.unlock();
+	}
+
 	// PI dropdown menu has saved new settings for this context (aka server name changed), load those
 	mVisibleContextsMutex.lock();
 	if (inPayload.find("Server") != inPayload.end())

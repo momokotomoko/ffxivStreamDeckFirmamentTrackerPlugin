@@ -6,41 +6,22 @@
       <link rel="stylesheet" href="sdpi.css">
    </head>
    <body>
-      <div class="sdpi-item" id="select_single">
-         <div class="sdpi-item-label">Server</div>
-         <select class="sdpi-item-value select" id="Server" onchange="sendValueToPlugin(event.target.value, 'Server'); saveValue(event.target.value, 'Server')">
-            <option disabled="disabled" selected="selected" hidden="hidden"></option>
-            <optgroup label="Aether">
-               <option value="Adamantoise">Adamantoise</option>
-               <option value="Cactuar">Cactuar</option>
-               <option value="Faerie">Faerie</option>
-               <option value="Gilgamesh">Gilgamesh</option>
-               <option value="Jenova">Jenova</option>
-               <option value="Midgardsormr">Midgardsormr</option>
-               <option value="Sargatanas">Sargatanas</option>
-               <option value="Siren">Siren</option>
-            </optgroup>
-            <optgroup label="Primal">
-               <option value="Behemoth">Behemoth</option>
-               <option value="Excalibur">Excalibur</option>
-               <option value="Exodus">Exodus</option>
-               <option value="Famfrit">Famfrit</option>
-               <option value="Hyperion">Hyperion</option>
-               <option value="Lamia">Lamia</option>
-               <option value="Leviathan">Leviathan</option>
-               <option value="Ultros">Ultros</option>
-            </optgroup>
-            <optgroup label="Crystal">
-               <option value="Balmung">Balmung</option>
-               <option value="Brynhildr">Brynhildr</option>
-               <option value="Coeurl">Coeurl</option>
-               <option value="Diabolos">Diabolos</option>
-               <option value="Goblin">Goblin</option>
-               <option value="Malboro">Malboro</option>
-               <option value="Mateus">Mateus</option>
-               <option value="Zalera">Zalera</option>
-            </optgroup>
-         </select>
+      <div class="sdpi-item" id="server_select">
+          <div class="sdpi-item-label">Server Select</div>
+          <select class="sdpi-item-value select" id="Server" 
+                  onchange="sendValueToPlugin(event.target.value, 'Server');
+                            saveValue(event.target.value, 'Server');
+                            document.getElementById('server_textbox').value = event.target.value;">
+              <option disabled="disabled" selected="selected" hidden="hidden"></option>
+          </select>
+      </div>
+      <div class="sdpi-item">
+          <div class="sdpi-item-label">Server</div>
+          <input class="sdpi-item-value" id="server_textbox"
+                 placeholder="Select your server" value=""
+                 onchange="sendValueToPlugin(event.target.value, 'Server');
+                           saveValue(event.target.value, 'Server');
+                           document.getElementById('Server').value = event.target.value">
       </div>
       <script>
          // this is our global websocket, used to communicate from/to Stream Deck software
@@ -65,12 +46,21 @@
                  };
                  // register property inspector to Stream Deck
                  websocket.send(JSON.stringify(json));
-         
+
+                 json = {
+                     "event": "getGlobalSettings",
+                     "context": uuid,
+                 };
+                 websocket.send(JSON.stringify(json));
+
                  json = {
                      "event": "getSettings",
                      "context": uuid,
                  };
                  websocket.send(JSON.stringify(json));
+
+                 // send init message
+                 sendValueToPlugin("true", "Init");
              }
          
              // retrieve saved settings if there are any
@@ -80,8 +70,25 @@
                  if (jsonObj.event === 'didReceiveSettings') {
                      const payload = jsonObj.payload.settings;
          
-                     document.getElementById('Server').value !== undefined ? document.getElementById('Server').value = payload.Server : document.getElementById('Server').value = "";
+                     if (payload.Server != null) {
+                         document.getElementById('server_textbox').value = payload.Server;
+                         document.getElementById('Server').value = payload.Server;
+                     }
                      sendValueToPlugin(payload.Server, "Server");
+                 }
+
+                 if (jsonObj.event === 'didReceiveGlobalSettings') {
+                     const payload = jsonObj.payload.settings;
+
+                     if (payload.hasOwnProperty('menu')) {
+                         for (region in payload.menu) {
+                             for (dc in payload.menu[region]) {
+                                 for (s in payload.menu[region][dc]) {
+                                     insertDropdownOption("Server", dc, s, s);
+                                 }
+                             }
+                         }
+                     }
                  }
              };
          }
@@ -113,6 +120,54 @@
                   };
                   websocket.send(JSON.stringify(json));
              }
+         }
+
+         // inserts a radio button to buttons with specified id, with specified button name if it doesn't already exist
+         function insertRadioButton(id, name) {
+             const radioEl = document.getElementById(id);
+
+             if (radioEl.querySelector("input[id='" + name +"']") == null) {
+                 newInput = document.createElement('input');
+                 newInput.id = name;
+                 newInput.type = "radio";
+                 newInput.name = "rdio";
+
+                 newLabel = document.createElement('label');
+                 newLabel.for = name;
+                 newLabel.class = "sdpi-item-label";
+                 newLabel.textContent = name;
+                 newLabel.appendChild(document.createElement('span'));
+
+                 newSpan = document.createElement('span');
+                 newSpan.class = "sdpi-item-child";
+                 newSpan.appendChild(newInput);
+                 newSpan.appendChild(newLabel);
+
+                 radioEl.appendChild(newSpan);
+                 
+                 radioEl.appendChild(document.createElement('br'));
+             }
+         }
+
+         // inserts an option to specified optgroup ID in the tracker dropdown menu
+         function insertDropdownOption(id, optgroupID, name, value) {
+             
+             menu = document.getElementById(id);
+             var el = menu;
+             
+             if (optgroupID != null)  {
+                 if (menu.querySelector("optgroup[label='" + optgroupID + "']") == null) {
+                     grp = document.createElement('OPTGROUP');
+                     grp.label = optgroupID;
+                     menu.appendChild(grp);
+                 }
+                 el = menu.querySelector("optgroup[label='" + optgroupID + "']");
+             }
+          
+             opt = document.createElement('OPTION');
+             opt.textContent = name;
+             opt.value = value;
+             el.appendChild(opt);
          }
       </script>
    </body>
