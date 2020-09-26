@@ -107,6 +107,10 @@ void ESDConnectionManager::OnMessage(websocketpp::connection_hdl, WebsocketClien
 			{
 				mPlugin->SendToPlugin(action, context, payload, deviceID);
 			}
+			else if (event == kESDSDKEventDidReceiveGlobalSettings)
+			{
+				mPlugin->DidReceiveGlobalSettings(payload);
+			}
 		}
 		catch (...)
 		{
@@ -229,6 +233,17 @@ void ESDConnectionManager::ShowOKForContext(const std::string& inContext)
 	jsonObject[kESDSDKCommonEvent] = kESDSDKEventShowOK;
 	jsonObject[kESDSDKCommonContext] = inContext;
 	
+	websocketpp::lib::error_code ec;
+	mWebsocket.send(mConnectionHandle, jsonObject.dump(), websocketpp::frame::opcode::text, ec);
+}
+
+void ESDConnectionManager::GetGlobalSettings()
+{
+	json jsonObject;
+
+	jsonObject[kESDSDKCommonEvent] = kESDSDKEventGetGlobalSettings;
+	jsonObject[kESDSDKCommonContext] = mPluginUUID;
+
 	websocketpp::lib::error_code ec;
 	mWebsocket.send(mConnectionHandle, jsonObject.dump(), websocketpp::frame::opcode::text, ec);
 }
