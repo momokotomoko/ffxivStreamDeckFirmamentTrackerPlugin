@@ -20,14 +20,16 @@ FirmamentTrackerHelper::FirmamentTrackerHelper()
 /**
 	@brief Read the html page and store it into htmlData string
 
+	@param[in] url url to html page
+
 	@return true if success 
 **/
-bool FirmamentTrackerHelper::ReadFirmamentHTML()
+bool FirmamentTrackerHelper::ReadFirmamentHTML(const std::string & url)
 {
 	mHtmlMutex.lock();
 
 	// read html
-	bool isSuccess = curlutils::readHTML(html, mHttpData.get(), mHttpCode);
+	bool isSuccess = curlutils::readHTML(url, mHttpData.get(), mHttpCode);
 	if (isSuccess)
 	{
 		// generate the dom tree

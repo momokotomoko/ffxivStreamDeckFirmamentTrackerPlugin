@@ -38,11 +38,19 @@ Select a server from the dropdown menu to track.
 
 `Server`
 
-Textbox where you can type the name of the server to track, in case it is not in the dropdown menu.
+Textbox where you can type the name of the server to track, in case it is not in the dropdown menu. It is case sensitive.
+
+`Button URL`
+
+A custom URL per button can be set such that when the StreamDeck button is pressed, the webpage is opened by the default browser.
 
 `Font`
 
 Servers with longer names can use the `T` drop down menu to select a different font size.
+
+`Firmament URL`
+
+An advanced setting that allows the user to specify the location of the firmament progress page in case it ever changes. This is a global setting and it is reflected across all instances of this plugin on the StreamDeck.
 
 ## Source Code
 

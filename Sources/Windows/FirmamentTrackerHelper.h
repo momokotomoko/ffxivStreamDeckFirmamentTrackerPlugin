@@ -42,12 +42,11 @@ public:
 		bool isValid = false;
 	};
 
-	const std::string html = "https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report";
 	FirmamentTrackerHelper();
 	~FirmamentTrackerHelper() {};
 
 	bool GetFirmamentProgress(const std::string& server, std::string& progress);
-	bool ReadFirmamentHTML();
+	bool ReadFirmamentHTML(const std::string& url);
 	bool isHtmlGood();
 
 	std::vector<FirmamentTrackerHelper::restorationRegion> getServerHierarchy();

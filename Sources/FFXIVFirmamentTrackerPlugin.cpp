@@ -65,9 +65,9 @@ void FFXIVFirmamentTrackerPlugin::startTimers()
 			// read HTML and update UI once triggered
 			mVisibleContextsMutex.lock();
 			for (const auto& context : mContextServerMap)
-				mConnectionManager->SetTitle(context.second + "\nLoading", context.first, kESDSDKTarget_HardwareAndSoftware);
+				mConnectionManager->SetTitle(context.second.server + "\nLoading", context.first, kESDSDKTarget_HardwareAndSoftware);
 
-			bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML();
+			bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML(mUrl);
 
 			for (const auto& context : mContextServerMap)
 				this->UpdateUI(context.first);
@@ -93,15 +93,15 @@ void FFXIVFirmamentTrackerPlugin::UpdateUI(const std::string& inContext)
 		// go through all our visible contexts and set the title to show the firmament progress
 		if (mContextServerMap.find(inContext) != mContextServerMap.end())
 		{
-			if (mContextServerMap.at(inContext).length() > 0)
+			if (mContextServerMap.at(inContext).server.length() > 0)
 			{
 				std::string progress;
-				bool isServerParsed = mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext), progress);
+				bool isServerParsed = mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext).server, progress);
 				// Server name \n progress%
 				if (isServerParsed)
-					mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
+					mConnectionManager->SetTitle(mContextServerMap.at(inContext).server + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
 				else
-					mConnectionManager->SetTitle(mContextServerMap.at(inContext) + "\nNo Data", inContext, kESDSDKTarget_HardwareAndSoftware);
+					mConnectionManager->SetTitle(mContextServerMap.at(inContext).server + "\nNo Data", inContext, kESDSDKTarget_HardwareAndSoftware);
 			}
 			else
 				mConnectionManager->SetTitle("", inContext, kESDSDKTarget_HardwareAndSoftware);
@@ -121,8 +121,13 @@ void FFXIVFirmamentTrackerPlugin::UpdateUI(const std::string& inContext)
 
 void FFXIVFirmamentTrackerPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
-	// if key is pressed, open firmament page
-	mConnectionManager->OpenUrl(mFirmamentTrackerHelper->html);
+	mVisibleContextsMutex.lock();
+	std::string url = mContextServerMap.at(inContext).onClickUrl;
+	mVisibleContextsMutex.unlock();
+
+	if (url.find("https://") != 0 && url.find("http://") != 0)
+		url = "https://" + url;
+	mConnectionManager->OpenUrl(url);
 }
 
 void FFXIVFirmamentTrackerPlugin::KeyUpForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
@@ -131,25 +136,56 @@ void FFXIVFirmamentTrackerPlugin::KeyUpForAction(const std::string& inAction, co
 }
 
 /**
+	@brief Reads a payload into a contextMetaData_t struct
+
+	@param[in] payload the json payload
+
+	@return the contextMetaData_t struct
+**/
+FFXIVFirmamentTrackerPlugin::contextMetaData_t FFXIVFirmamentTrackerPlugin::readJsonIntoMetaData(const json& payload)
+{
+#ifdef LOGGING
+	mConnectionManager->LogMessage(payload.dump(4));
+#endif
+	contextMetaData_t data{};
+	if (payload.find("Server") != payload.end())
+	{
+		data.server = payload["Server"].get<std::string>();
+	}
+	if (payload.find("OnClickUrl") != payload.end())
+	{
+		data.onClickUrl = payload["OnClickUrl"].get<std::string>();
+	}
+	return data;
+}
+
+/**
 	@brief Runs when app shows up on streamdeck profile
 **/
 void FFXIVFirmamentTrackerPlugin::WillAppearForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	// read payload for any saved settings
-	std::string server = "";
-	if (inPayload["settings"].find("Server") != inPayload["settings"].end())
+	contextMetaData_t data{};
+	if (inPayload.find("settings") != inPayload.end())
 	{
-		server = inPayload["settings"]["Server"].get<std::string>();
+		data = readJsonIntoMetaData(inPayload["settings"]);
+	}
+	
+	mVisibleContextsMutex.lock();
+	// if just launched, try to grab any global settings
+	if (!isInit)
+	{
+		mConnectionManager->GetGlobalSettings();
+		isInit = true;
 	}
 
-	// Remember the context and the saved server name for this app
-	mVisibleContextsMutex.lock();
 	// if this is the first plugin to be displayed, boot up the timers
 	bool isEmpty = mContextServerMap.empty();
 	if (isEmpty)
 		startTimers();
 
-	mContextServerMap.insert({ inContext, server });
+	// Remember the context and the saved metadata
+	mContextServerMap.insert({ inContext, data });
 
 	// update the UI with firmament percentages
 	if (!isEmpty)
@@ -191,41 +227,84 @@ void FFXIVFirmamentTrackerPlugin::DeviceDidDisconnect(const std::string& inDevic
 **/
 void FFXIVFirmamentTrackerPlugin::SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
-	// check for the init signal
-	if (inPayload.find("Init") != inPayload.end())
-	{
-		// if HTML read was good, setup the dropdown menu by sending all possible settings
-		mInitMutex.lock();
-		if (mFirmamentTrackerHelper->isHtmlGood())
-		{
-			json j;
-			std::vector<FirmamentTrackerHelper::restorationRegion> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
-			for (const auto region : serverHierarchy)
-			{
-				for (const auto dc : region.dc)
-				{
-					for (const auto server : dc.second.servers)
-					{
-						j["menu"][region.name][dc.first][server];
-					}
-				}
-			}
-
-			mConnectionManager->SetGlobalSettings(j);
-			#ifdef LOGGING
-			mConnectionManager->LogMessage(j.dump(4));
-			#endif
-		}
-		mInitMutex.unlock();
-	}
-
-	// PI dropdown menu has saved new settings for this context (aka server name changed), load those
 	mVisibleContextsMutex.lock();
-	if (inPayload.find("Server") != inPayload.end())
+	// PI dropdown menu has saved new settings for this context, load those
+	if (mContextServerMap.find(inContext) != mContextServerMap.end())
 	{
-		mContextServerMap.at(inContext) = inPayload["Server"].get<std::string>();
+		// updated stored settings
+		mContextServerMap.at(inContext) = readJsonIntoMetaData(inPayload);
+	}
+	else
+	{
+		mConnectionManager->LogMessage("Error: SendToPlugin: could not find stored context: " + inContext + "\nPayload:\n" + inPayload.dump(4));
+		mConnectionManager->LogMessage(inContext);
 	}
 	// update UI after changing server for this app
 	this->UpdateUI(inContext);
+
+	mVisibleContextsMutex.unlock();
+}
+
+/**
+	@brief Runs when app recieves global settings
+**/
+void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload)
+{
+	mVisibleContextsMutex.lock();
+	// check for change in firmament website
+	json j = inPayload["settings"];
+	if (j.find("FirmamentUrl") != j.end())
+	{
+		std::string url = j["FirmamentUrl"].get<std::string>();
+		if (url != mUrl)
+		{
+			mUrl = url;
+			mFirstRead = true;
+		}
+	}
+
+	// do a test read and grab the server hierarchy here
+	if (mFirstRead) // only do this once per new url
+	{
+		bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML(mUrl);
+		if (isSuccess)
+		{
+			if (mFirmamentTrackerHelper->isHtmlGood())
+			{
+				// generate the hierarcchy and send as global setting
+				json j;
+				std::vector<FirmamentTrackerHelper::restorationRegion> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
+				for (const auto region : serverHierarchy)
+				{
+					for (const auto dc : region.dc)
+					{
+						for (const auto server : dc.second.servers)
+						{
+							j["menu"][region.name][dc.first][server];
+						}
+					}
+				}
+				j["FirmamentUrl"] = mUrl;
+
+				mConnectionManager->SetGlobalSettings(j);
+                #ifdef LOGGING
+				mConnectionManager->LogMessage(j.dump(4));
+                #endif
+
+				mFirstRead = false;
+			}
+		}
+	}
+
+	// send reload command now that global settings are sent
+	for (const auto& context : mContextServerMap)
+	{
+		json j;
+		j["reload"];
+		mConnectionManager->SendToPropertyInspector("", context.first, j);
+	}
+
+	// wake timer to update all UI elements
+	mTimer->wake();
 	mVisibleContextsMutex.unlock();
 }

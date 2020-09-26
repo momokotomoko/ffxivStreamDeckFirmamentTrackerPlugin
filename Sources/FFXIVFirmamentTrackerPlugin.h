@@ -33,19 +33,30 @@ public:
 	void DeviceDidDisconnect(const std::string& inDeviceID) override;
 	
 	void SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID) override;
+	void DidReceiveGlobalSettings(const json& inPayload) override;
 private:
 	
 	void UpdateUI(const std::string& inContext);
 	
 	std::mutex mVisibleContextsMutex;
 
-	// on first time the app appears we need these to trigger sending global settings
-	std::mutex mInitMutex;
+	// this struct contains a context's saved settings
+	struct contextMetaData_t
+	{
+		std::string onClickUrl; // webpage to open on click, each button can have a different webpage
+		std::string server; // name of the server this context is recording
+	};
+	std::unordered_map<std::string, contextMetaData_t> mContextServerMap;
 
-	std::unordered_map<std::string, std::string> mContextServerMap;
+	contextMetaData_t readJsonIntoMetaData(const json& payload);
 	
 	FirmamentTrackerHelper *mFirmamentTrackerHelper = nullptr;
 	CallBackTimer *mTimer = nullptr;
 
 	void startTimers();
+
+	std::string mUrl = "https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report/";
+	bool mFirstRead = true; // if we're on the first read of this url
+
+	bool isInit = false; // on init we need to call GetGlobalSettings
 };
