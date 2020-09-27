@@ -18,18 +18,31 @@ StreamDeckImageManager::StreamDeckImageManager(const std::string & path)
 }
 
 /**
+	@brief Get the name of all png images in directory
+
+	@return set of available png images in directory
+**/
+std::set<std::string> StreamDeckImageManager::getAvailablePngImages()
+{
+	std::set<std::string> imageNames;
+	for (const auto& entry : std::experimental::filesystem::directory_iterator(mPath))
+		if (entry.path().extension().string() == ".png")
+			imageNames.insert(entry.path().filename().string());
+
+	return imageNames;
+}
+
+/**
 	@brief Get the name of all stored images
 
-	@return vector of all stored images
+	@return set of all stored images
 **/
-std::vector<std::string> StreamDeckImageManager::getAvailableImages()
+std::set<std::string> StreamDeckImageManager::getCachedImages()
 {
-	std::vector<std::string> imageNames;
+	std::set<std::string> imageNames;
 
 	for (const auto& image : mImageNameToBase64Map)
-	{
-		imageNames.push_back(image.first);
-	}
+		imageNames.insert(image.first);
 
 	return imageNames;
 }
@@ -42,9 +55,9 @@ std::vector<std::string> StreamDeckImageManager::getAvailableImages()
 bool StreamDeckImageManager::loadAllPng()
 {
 	bool isSuccess = true;
-
-	for (const auto& entry : std::experimental::filesystem::directory_iterator(mPath))
-		if (!loadImage(entry.path().filename().string()))
+	std::set<std::string> images = getAvailablePngImages();
+	for (const auto& imageName : images)
+		if (loadImage(imageName) == mImageNameToBase64Map.end())
 			isSuccess = false;
 
 	return isSuccess;
@@ -55,9 +68,9 @@ bool StreamDeckImageManager::loadAllPng()
 
 	@param[in] filename name of the image file
 
-	@return true on success
+	@return iterator to image in cache, 
 **/
-bool StreamDeckImageManager::loadImage(const std::string& filename)
+std::map<std::string, std::string>::iterator StreamDeckImageManager::loadImage(const std::string& filename)
 {
 	std::vector<unsigned char> buffer;
 	std::string path = "Icons/" + filename;
@@ -69,13 +82,13 @@ bool StreamDeckImageManager::loadImage(const std::string& filename)
 		// store to cache
 		auto imageIt = mImageNameToBase64Map.find(filename);
 		if (imageIt == mImageNameToBase64Map.end())
-			mImageNameToBase64Map.insert({ filename, base64Image });
+			imageIt = mImageNameToBase64Map.insert({ filename, base64Image }).first;
 		else
 			imageIt->second = base64Image;
 
-		return true;
+		return imageIt;
 	}
-	return false;
+	return mImageNameToBase64Map.end();
 }
 
 /**
@@ -105,8 +118,18 @@ bool StreamDeckImageManager::unloadImage(const std::string& filename)
 **/
 const std::string StreamDeckImageManager::getImage(const std::string& filename)
 {
-	auto imageIt = mImageNameToBase64Map.find(filename);
-	if (imageIt != mImageNameToBase64Map.end())
-		return imageIt->second;
+	if (filename.length() > 0)
+	{
+		auto imageIt = mImageNameToBase64Map.find(filename);
+		if (imageIt != mImageNameToBase64Map.end())
+			return imageIt->second;
+		else
+		{
+			// if image not cached, try to load it
+			imageIt = loadImage(filename);
+			if (imageIt != mImageNameToBase64Map.end())
+				return imageIt->second;
+		}
+	}
 	return "";
 }

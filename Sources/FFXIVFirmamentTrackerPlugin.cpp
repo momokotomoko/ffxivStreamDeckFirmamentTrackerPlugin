@@ -299,7 +299,7 @@ void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload
 		}
 
 		// send list of images
-		std::vector <std::string> imageList = mStreamDeckImageManager->getAvailableImages();
+		std::set <std::string> imageList = mStreamDeckImageManager->getAvailablePngImages();
 		for (const auto& image : imageList)
 		{
 			j["FirmamentImages"] += image;

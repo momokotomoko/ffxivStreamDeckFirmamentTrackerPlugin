@@ -19,14 +19,16 @@ public:
 
 	bool unloadImage(const std::string& filename);
 	const std::string getImage(const std::string& filename);
-	bool loadImage(const std::string& filename);
 	bool loadAllPng();
 
-	std::vector<std::string> getAvailableImages();
+	std::set<std::string> getAvailablePngImages();
+	std::set<std::string> getCachedImages();
 
 private:
 	// contains cache of base64 images that have been loaded
 	std::map<std::string, std::string> mImageNameToBase64Map;
+
+	std::map<std::string, std::string>::iterator loadImage(const std::string& filename);
 
 	const std::string mPath;
 };
