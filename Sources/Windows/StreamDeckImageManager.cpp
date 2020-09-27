@@ -73,7 +73,7 @@ bool StreamDeckImageManager::loadAllPng()
 std::map<std::string, std::string>::iterator StreamDeckImageManager::loadImage(const std::string& filename)
 {
 	std::vector<unsigned char> buffer;
-	std::string path = "Icons/" + filename;
+	std::string path = mPath + filename;
 	if (lodepng::load_file(buffer, path) == 0)
 	{
 		std::string base64Image;

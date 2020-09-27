@@ -1,81 +1,126 @@
 ﻿<!DOCTYPE html>
 <html>
    <head>
-      <meta charset="utf-8" />
-      <title>FFXIV Firmament Tracker</title>
-      <link rel="stylesheet" href="sdpi.css">
+       <meta charset="utf-8" />
+       <title>FFXIV Firmament Tracker</title>
+       <link rel="stylesheet" href="sdpi.css">
    </head>
    <body>
-      <div class="sdpi-item" id="server_select">
-         <div class="sdpi-item-label">Server Select</div>
-         <select class="sdpi-item-value select" id="server_menu"
-                 onchange="document.getElementById('server_textbox').value = event.target.value;
+       <div style="background-image: url('Images/Other/banner.png'); background-repeat : no-repeat; background-size: 300px;">
+           <div style="position: relative; top: 120px; padding-left: 20px;">
+               <div class="sdpi-item" id="server_select">
+                   <div class="sdpi-item-label">Server Select</div>
+                   <select class="sdpi-item-value select" id="server_menu"
+                           onchange="document.getElementById('server_textbox').value = event.target.value;
                            updateSettingsToPlugin();"
-                 value="">
-             <option disabled="disabled" selected="selected" hidden="hidden"></option>
-         </select>
-      </div>
-      <div class="sdpi-item">
-         <div class="sdpi-item-label">Server</div>
-         <input class="sdpi-item-value" id="server_textbox"
-                placeholder="Select your server" value=""
-                onchange="document.getElementById('server_menu').value = event.target.value, 
+                           value="">
+                       <option disabled="disabled" selected="selected" hidden="hidden"></option>
+                   </select>
+               </div>
+               <div class="sdpi-item">
+                   <div class="sdpi-item-label">Server</div>
+                   <input class="sdpi-item-value" id="server_textbox"
+                          placeholder="Select your server" value=""
+                          onchange="document.getElementById('server_menu').value = event.target.value,
                           updateSettingsToPlugin();">
-      </div>
-      <div class="sdpi-item">
-         <details class="message sdpi-item-value">
-            <summary id="server_text" style="font-size:12px">Loading</summary>
-         </details>
-      </div>
-      <div class="sdpi-item" type="progress" id="server_progress">
-         <div class="sdpi-item-label">Progress</div>
-         <progress id="server_progress_bar" class="sdpi-item-value" value="0.0" max="100"></progress>
-      </div>
-      <div class="sdpi-item">
-         <div class="sdpi-item-label">Button URL</div>
-         <input class="sdpi-item-value" id="button_url"
-                value=""
-                placeholder="Enter a URL" onchange="updateSettingsToPlugin();">
-      </div>
-      <div class="sdpi-item" id="image_select">
-         <div class="sdpi-item-label">Image Select</div>
-         <select class="sdpi-item-value select" id="image_menu"
-                 onchange="updateSettingsToPlugin();"
-                 value="">
-             <option selected="selected" value="">Default</option>
-         </select>
-      </div>
-      <details>
-         <summary>Advanced</summary>
-         <div class="sdpi-item">
-            <div class="sdpi-item-label">Firmament URL</div>
-            <input class="sdpi-item-value" id="firmament_url"
-                   value=""
-                   placeholder="Builders' Progress Report URL" onchange="updateFirmamentUrl(event.target.value);">
-         </div>
-      </details>
-      <!--
-      <div class="sdpi-item">
-         <div class="sdpi-item-label">Debug</div>
-         <input class="sdpi-item-value" id="debug_textbox"
-                value=""
-                placeholder="Debug" onchange="">
-      </div>
-      -->
+               </div>
+               <!-- Use white-space:pre-wrap to allow for new-lines -->
+               <div class="sdpi-heading" id="server_text" style="white-space:pre-wrap; text-align: center;">Loading</div>
+               <div class="sdpi-item" type="progress" id="server_progress">
+                   <div class="sdpi-item-label">Progress</div>
+                   <progress id="server_progress_bar" class="sdpi-item-value" value="0.0" max="100"></progress>
+               </div>
+               <hr />
+               <div class="sdpi-item">
+                   <div class="sdpi-item-label">Button URL</div>
+                   <input class="sdpi-item-value" id="button_url"
+                          value=""
+                          placeholder="Enter a URL" onchange="updateSettingsToPlugin();">
+               </div>
+               <div class="sdpi-item" id="image_select">
+                   <div class="sdpi-item-label">Image Select</div>
+                   <select class="sdpi-item-value select" id="image_menu"
+                           onchange="updateSettingsToPlugin();"
+                           value="">
+                       <option selected="selected" value="">Default</option>
+                   </select>
+               </div>
+               <details class="sdpi-item">
+                   <summary>Advanced</summary>
+                   <div class="sdpi-item">
+                       <div class="sdpi-item-label">Firmament URL</div>
+                       <input class="sdpi-item-value" id="firmament_url"
+                              value=""
+                              placeholder="Builders' Progress Report URL" onchange="updateFirmamentUrl(event.target.value);">
+                   </div>
+               </details>
+               <details class="sdpi-item">
+                   <summary>About</summary>
+                   <p>Made by Momoko Tomoko from Sargatanas.</p>
+                   <style>
+                       * {
+                           box-sizing: border-box;
+                       }
+
+                       .column {
+                           float: left;
+                           width: 50%;
+                           text-align: center;
+                       }
+
+                       .row:after {
+                           content: "";
+                           display: table;
+                           clear: both;
+                           text-align: center;
+                       }
+
+                       .center {
+                           text-align: center;
+                       }
+                   </style>
+                   <div class="row">
+                       <div class="column">
+                           <a href="#" onclick="openUrl('https://na.finalfantasyxiv.com/lodestone/character/1525660/'); return false;">Lodestone</a>
+                           <br />
+                           <a href="#" onclick="openUrl('https://www.youtube.com/channel/UCAqH9TEBLONg22Espxyw-Rg'); return false;">Youtube</a>
+                       </div>
+                       <div class="column">
+                           <a href="#" onclick="openUrl('https://twitter.com/momoko_tomoko'); return false;">Twitter</a>
+                           <br />
+                           <a href="#" onclick="openUrl('https://github.com/momokotomoko/ffxivStreamDeckFirmamentTrackerPlugin'); return false;">Github</a>
+                       </div>
+                   </div>
+                   <p class="center">
+                       <a href="#" onclick="openUrl('https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=886JLXQKS39U4&currency_code=USD&source=url'); return false;">
+                           <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" />
+                       </a>
+                   </p>
+               </details>
+               <!--
+               <div class="sdpi-item">
+                   <div class="sdpi-item-label">Debug</div>
+                   <input class="sdpi-item-value" id="debug_textbox"
+                          value=""
+                          placeholder="Debug" onchange="">
+               </div>
+               -->
+           </div>
+       </div>
       <script>
          // this is our global websocket, used to communicate from/to Stream Deck software
          // and some info about our plugin, as sent by Stream Deck software
          var websocket = null,
          uuid = null,
          actionInfo = {};
-         
+
          function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
              uuid = inUUID;
              // please note: the incoming arguments are of type STRING, so
              // in case of the inActionInfo, we must parse it into JSON first
              actionInfo = JSON.parse(inActionInfo); // cache the info
              websocket = new WebSocket('ws://localhost:' + inPort);
-         
+
              // if connection was established, the websocket sends
              // an 'onopen' event, where we need to register our PI
              websocket.onopen = function () {
@@ -85,7 +130,7 @@
                  };
                  // register property inspector to Stream Deck
                  websocket.send(JSON.stringify(json));
-          
+
                  json = {
                      "event": "getGlobalSettings",
                      "context": uuid,
@@ -98,7 +143,7 @@
                  };
                  websocket.send(JSON.stringify(json));
              }
-         
+
              // retrieve saved settings if there are any
              websocket.onmessage = function (evt) {
                  // Received message from Stream Deck
@@ -106,7 +151,7 @@
 
                  if (jsonObj.event === 'didReceiveSettings') {
                      const payload = jsonObj.payload.settings;
-         
+
                      if (payload.Server != undefined) {
                          document.getElementById('server_textbox').value = payload.Server;
                          document.getElementById('server_menu').value = payload.Server;
@@ -125,7 +170,7 @@
 
                      updateSettingsToPlugin();
                  }
-                 
+
                  if (jsonObj.event === 'didReceiveGlobalSettings') {
                      const payload = jsonObj.payload.settings;
 
@@ -189,17 +234,20 @@
                          if (payload['FirmamentStatus']['isValid'] == true) {
                              document.getElementById('server_progress_bar').value = payload['FirmamentStatus']['progress'];
                              document.getElementById('server_text').textContent = payload['FirmamentStatus']['text'];
+                             if (payload['FirmamentStatus']['level'] != "") {
+                                  document.getElementById('server_text').textContent += "\nLevel: " + payload['FirmamentStatus']['level'];
+                             }
                          }
                          else
                          {
                              document.getElementById('server_progress_bar').value = 0;
-                             document.getElementById('server_text').textContent = "";
+                             document.getElementById('server_text').textContent = "Error:\nNo firmament status found";
                          }
                      }
                  }
              };
          }
-         
+
          // update settings
          function updateSettingsToPlugin() {
              payload = {
@@ -284,7 +332,7 @@
                  newSpan.appendChild(newLabel);
 
                  radioEl.appendChild(newSpan);
-                 
+
                  radioEl.appendChild(document.createElement('br'));
              }
          }
@@ -293,7 +341,7 @@
          function insertDropdownOption(id, optgroupID, name, value) {
              menu = document.getElementById(id);
              var el = menu;
-             
+
              if (optgroupID != "")  {
                  if (menu.querySelector("optgroup[label='" + optgroupID + "']") == null) {
                      grp = document.createElement('OPTGROUP');
@@ -302,11 +350,24 @@
                  }
                  el = menu.querySelector("optgroup[label='" + optgroupID + "']");
              }
-          
+
              opt = document.createElement('OPTION');
              opt.textContent = name;
              opt.value = value;
              el.appendChild(opt);
+         }
+
+         // opens a url in the default browser
+         function openUrl(url) {
+             if (websocket) {
+                 const json = {
+                         "event": "openUrl",
+                         "payload": {
+                             "url": url
+                         }
+                 };
+                 websocket.send(JSON.stringify(json));
+             }
          }
       </script>
    </body>

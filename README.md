@@ -16,6 +16,8 @@ Clicking the button will open up the Builders' Progress Report web page.
 
 Compatible with Windows.
 
+Note: There is currently no API for reading the firmament progress. Instead, this plugin parses the html page directly. This works for now, but if SE changes the webpage in some significant way, this plugin may stop working until I update it.
+
 ![](screenshot.png)
 
 ## Installation
@@ -27,6 +29,8 @@ Folder: https://github.com/momokotomoko/ffxivStreamDeckFirmamentTrackerPlugin/Re
 If an installation was previously present, you must delete the plugin folder located in Elgato's AppData folder. For example: `C:\Users\<username>\AppData\Roaming\Elgato\StreamDeck\Plugins`
 
 ## Settings
+
+![](settings.png)
 
 `Title`
 
@@ -50,7 +54,7 @@ By default, the webpage is set to the [Ishgardian Restoration Builders' Progress
 
 Select a StreamDeck image from an included set. If set to Default, you can still use the StreamDeck UI to upload your own image as usual.
 
-![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish1.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish2.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish3.png)
+![](Sources/com.elgato.ffxivfirmament.sdPlugin/Images/Icons/ish1.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Images/Icons/ish2.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Images/Icons/ish3.png)
 
 `Font`
 
@@ -67,5 +71,9 @@ The source code can be found in the Sources folder.
 ## Developed By
 
 [Momoko Tomoko from Sargatanas](https://na.finalfantasyxiv.com/lodestone/character/1525660/)
+
+[Youtube](https://www.youtube.com/channel/UCAqH9TEBLONg22Espxyw-Rg)
+
+[Twitter](https://twitter.com/momoko_tomoko)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=886JLXQKS39U4&currency_code=USD&source=url)

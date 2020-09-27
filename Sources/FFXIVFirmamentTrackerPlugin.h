@@ -55,7 +55,7 @@ private:
 	std::unique_ptr<FirmamentTrackerHelper> mFirmamentTrackerHelper = std::make_unique <FirmamentTrackerHelper>();
 	std::unique_ptr<CallBackTimer> mTimer = std::make_unique <CallBackTimer>();
 
-	std::unique_ptr<StreamDeckImageManager> mStreamDeckImageManager = std::make_unique <StreamDeckImageManager>("Icons/");
+	std::unique_ptr<StreamDeckImageManager> mStreamDeckImageManager = std::make_unique <StreamDeckImageManager>("Images/Icons/");
 
 	void startTimers();
 
