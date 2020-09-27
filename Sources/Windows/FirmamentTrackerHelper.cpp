@@ -24,7 +24,7 @@ FirmamentTrackerHelper::FirmamentTrackerHelper()
 
 	@return true if success 
 **/
-bool FirmamentTrackerHelper::ReadFirmamentHTML(const std::string & url)
+bool FirmamentTrackerHelper::readFirmamentHTML(const std::string & url)
 {
 	mHtmlMutex.lock();
 
@@ -65,48 +65,42 @@ bool FirmamentTrackerHelper::isHtmlGood()
 
 	@return server hierarchy
 **/
-std::vector<FirmamentTrackerHelper::restorationRegion> FirmamentTrackerHelper::getServerHierarchy()
+std::vector<FirmamentTrackerHelper::restorationRegion_t> FirmamentTrackerHelper::getServerHierarchy()
 {
 	mHtmlMutex.lock();
-	std::vector<restorationRegion> serverHierarchy = mServerHierarchy;
+	std::vector<restorationRegion_t> serverHierarchy = mServerHierarchy;
 	mHtmlMutex.unlock();
 
 	return serverHierarchy;
 }
 
 /**
-	@brief Parse raw html for firmament progress
+	@brief Get the status for this server
 
 	@param[in] server name of server to get progress for
 	@param[out] progress percentage
 
-	@return true if successful
+	@return restorationServerStatus_t struct
 **/
-bool FirmamentTrackerHelper::GetFirmamentProgress(const std::string & server, std::string& progress)
+const FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::getFirmamentStatus(const std::string & server)
 {
-	bool isSuccessful = false;
+	restorationServerStatus_t status;
 	mHtmlMutex.lock();
 	if (mHttpCode == 200)
 	{
 		if (mServerStatus.find(server) != mServerStatus.end())
-		{
-			isSuccessful = mServerStatus.at(server).isValid;
-			progress = mServerStatus.at(server).progress;
-		}
+			status = mServerStatus.at(server);
 		else
-		{
-			// http was good but something went wrong...
-			progress = "No Data";
-		}
+			// http was good but could not parse page for server info
+			status.progress = "No Data";
 	}
 	else {
 		// http read was bad
-		progress = "Error: " + std::to_string(mHttpCode);
+		status.progress = "Error: " + std::to_string(mHttpCode);
 	}
-
 	mHtmlMutex.unlock();
 
-	return isSuccessful;
+	return status;
 }
 
 /*
@@ -115,12 +109,12 @@ bool FirmamentTrackerHelper::GetFirmamentProgress(const std::string & server, st
 	@param[in] liIt iterator to the <li> block to parse
 	@param[in] dom the parsed html document object model tree
 
-	@return restorationServerStatus struct
+	@return restorationServerStatus_t struct
 */
-FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseServerData(tree<htmlcxx::HTML::Node>::post_order_iterator liIt,
+FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseServerData(tree<htmlcxx::HTML::Node>::post_order_iterator liIt,
 	tree<htmlcxx::HTML::Node>& dom)
 {
-	restorationServerStatus status;
+	restorationServerStatus_t status;
 
 	// parse world name
 	auto worldNameIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "world_name", liIt.begin(), liIt.end());
@@ -145,12 +139,14 @@ FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseSer
 
 	// convert bar value to progress
 	std::string progress = "nan";
+	float progressF = 0.0;
 	// check for completion string
 	const std::string completionWord = "Works Complete";
 	std::size_t completionPos = barValue.find(completionWord);
 	if (completionPos != std::string::npos)
 	{
 		progress = "Completed";
+		progressF = 100.0;
 	}
 	else
 	{
@@ -165,12 +161,13 @@ FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseSer
 			if (startPos < endPos)
 			{
 				// extract the substring
-				progress = barValue.substr(startPos, endPos - startPos + 1);
+				progress = barValue.substr(startPos, endPos - startPos);
+				progressF = std::stof(progress);
+				progress += "%";
 			}
 		}
 	}
-
-	status = { worldName, progress, level, text, true };
+	status = { worldName, progress, level, text, progressF, true };
 	return status;
 }
 
@@ -183,8 +180,8 @@ FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseSer
 
 	@return true if success
 */
-bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationRegion>& serverHierarchy,
-	std::unordered_map<std::string, restorationServerStatus>& serverStatus,
+bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationRegion_t>& serverHierarchy,
+	std::unordered_map<std::string, restorationServerStatus_t>& serverStatus,
 	tree<htmlcxx::HTML::Node>& dom)
 {
 	serverHierarchy.clear();
@@ -248,7 +245,7 @@ bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationR
 				liIt != worldListIt.end();
 				liIt = htmlcxxutils::htmlcxxFindNextTag("li", liIt.end(), worldListIt.end()))
 			{
-				restorationServerStatus status = parseServerData(liIt, dom);
+				restorationServerStatus_t status = parseServerData(liIt, dom);
 
 				if (status.isValid)
 				{
@@ -275,7 +272,7 @@ bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationR
 
 	@return restoration status
 */
-FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseServerStatus(const std::string& server, tree<htmlcxx::HTML::Node>& dom)
+FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseServerStatus(const std::string& server, tree<htmlcxx::HTML::Node>& dom)
 {
 	for (auto it = dom.begin(); it != dom.end(); it++)
 	{
@@ -291,7 +288,7 @@ FirmamentTrackerHelper::restorationServerStatus FirmamentTrackerHelper::parseSer
 
 				if (!liIt->isTag() || !htmlcxxutils::strCaseCmp(liIt->tagName(), "li")) return {};
 
-				restorationServerStatus status = parseServerData(liIt, dom);
+				restorationServerStatus_t status = parseServerData(liIt, dom);
 
 				if (!status.isValid) return {};
 

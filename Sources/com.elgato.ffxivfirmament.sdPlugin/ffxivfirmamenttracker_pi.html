@@ -23,6 +23,15 @@
                           updateSettingsToPlugin();">
       </div>
       <div class="sdpi-item">
+         <details class="message sdpi-item-value">
+            <summary id="server_text" style="font-size:12px">Loading</summary>
+         </details>
+      </div>
+      <div class="sdpi-item" type="progress" id="server_progress">
+         <div class="sdpi-item-label">Progress</div>
+         <progress id="server_progress_bar" class="sdpi-item-value" value="0.0" max="100"></progress>
+      </div>
+      <div class="sdpi-item">
          <div class="sdpi-item-label">Button URL</div>
          <input class="sdpi-item-value" id="button_url"
                 value=""
@@ -174,6 +183,18 @@
                              "context": uuid,
                          };
                          websocket.send(JSON.stringify(json));
+                     }
+
+                     if (payload.hasOwnProperty('FirmamentStatus')) {
+                         if (payload['FirmamentStatus']['isValid'] == true) {
+                             document.getElementById('server_progress_bar').value = payload['FirmamentStatus']['progress'];
+                             document.getElementById('server_text').textContent = payload['FirmamentStatus']['text'];
+                         }
+                         else
+                         {
+                             document.getElementById('server_progress_bar').value = 0;
+                             document.getElementById('server_text').textContent = "";
+                         }
                      }
                  }
              };

@@ -56,7 +56,7 @@ void FFXIVFirmamentTrackerPlugin::startTimers()
 			for (const auto& context : mContextServerMap)
 				mConnectionManager->SetTitle(context.second.server + "\nLoading", context.first, kESDSDKTarget_HardwareAndSoftware);
 
-			bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML(mUrl);
+			bool isSuccess = mFirmamentTrackerHelper->readFirmamentHTML(mUrl);
 
 			for (const auto& context : mContextServerMap)
 				this->UpdateUI(context.first);
@@ -84,13 +84,17 @@ void FFXIVFirmamentTrackerPlugin::UpdateUI(const std::string& inContext)
 		{
 			if (mContextServerMap.at(inContext).server.length() > 0)
 			{
-				std::string progress;
-				bool isServerParsed = mFirmamentTrackerHelper->GetFirmamentProgress(mContextServerMap.at(inContext).server, progress);
+				FirmamentTrackerHelper::restorationServerStatus_t status = mFirmamentTrackerHelper->getFirmamentStatus(mContextServerMap.at(inContext).server);
+
 				// Server name \n progress%
-				if (isServerParsed)
-					mConnectionManager->SetTitle(mContextServerMap.at(inContext).server + "\n" + progress, inContext, kESDSDKTarget_HardwareAndSoftware);
-				else
-					mConnectionManager->SetTitle(mContextServerMap.at(inContext).server + "\nNo Data", inContext, kESDSDKTarget_HardwareAndSoftware);
+				mConnectionManager->SetTitle(mContextServerMap.at(inContext).server + "\n" + status.progress, inContext, kESDSDKTarget_HardwareAndSoftware);
+
+				json j;
+				j["FirmamentStatus"]["isValid"] = status.isValid;
+				j["FirmamentStatus"]["level"] = status.level;
+				j["FirmamentStatus"]["progress"] = std::to_string(status.progressF);
+				j["FirmamentStatus"]["text"] = status.text;
+				mConnectionManager->SendToPropertyInspector("", inContext, j);
 			}
 			else
 				mConnectionManager->SetTitle("", inContext, kESDSDKTarget_HardwareAndSoftware);
@@ -222,7 +226,7 @@ void FFXIVFirmamentTrackerPlugin::DeviceDidDisconnect(const std::string& inDevic
 }
 
 /**
-	@brief Runs when app recieves payload from PI, which is when PI dropdown menu changes
+	@brief Runs when app recieves payload from PI, which is when user changes some PI element
 **/
 void FFXIVFirmamentTrackerPlugin::SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
@@ -272,13 +276,13 @@ void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload
 		j["FirmamentUrl"] = mUrl;
 
 		// send hierarchy
-		bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML(mUrl);
+		bool isSuccess = mFirmamentTrackerHelper->readFirmamentHTML(mUrl);
 		if (isSuccess)
 		{
 			if (mFirmamentTrackerHelper->isHtmlGood())
 			{
 				// generate the hierarchy and send as global setting
-				std::vector<FirmamentTrackerHelper::restorationRegion> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
+				std::vector<FirmamentTrackerHelper::restorationRegion_t> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
 				for (const auto region : serverHierarchy)
 				{
 					for (const auto dc : region.dc)
