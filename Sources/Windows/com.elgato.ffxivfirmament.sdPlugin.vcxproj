@@ -191,7 +191,9 @@
     <ClInclude Include="CurlUtils.hpp" />
     <ClInclude Include="HtmlcxxUtils.hpp" />
     <ClInclude Include="FirmamentTrackerHelper.h" />
+    <ClInclude Include="ImageUtils.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="StreamDeckImageManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\ESDConnectionManager.cpp">
@@ -234,6 +236,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StreamDeckImageManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\com.elgato.ffxivfirmament.sdPlugin\ffxivfirmamenttracker_pi.html" />

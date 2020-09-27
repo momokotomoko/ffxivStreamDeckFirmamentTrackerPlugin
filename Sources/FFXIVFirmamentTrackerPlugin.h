@@ -15,6 +15,7 @@
 
 class FirmamentTrackerHelper;
 class CallBackTimer;
+class StreamDeckImageManager;
 
 class FFXIVFirmamentTrackerPlugin : public ESDBasePlugin
 {
@@ -45,13 +46,16 @@ private:
 	{
 		std::string onClickUrl; // webpage to open on click, each button can have a different webpage
 		std::string server; // name of the server this context is recording
+		std::string imageName;
 	};
 	std::unordered_map<std::string, contextMetaData_t> mContextServerMap;
 
 	contextMetaData_t readJsonIntoMetaData(const json& payload);
 	
-	FirmamentTrackerHelper *mFirmamentTrackerHelper = nullptr;
-	CallBackTimer *mTimer = nullptr;
+	std::unique_ptr<FirmamentTrackerHelper> mFirmamentTrackerHelper = std::make_unique <FirmamentTrackerHelper>();
+	std::unique_ptr<CallBackTimer> mTimer = std::make_unique <CallBackTimer>();
+
+	std::unique_ptr<StreamDeckImageManager> mStreamDeckImageManager = std::make_unique <StreamDeckImageManager>("Icons/");
 
 	void startTimers();
 

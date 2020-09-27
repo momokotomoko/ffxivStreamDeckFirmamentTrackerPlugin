@@ -28,10 +28,16 @@
                 value=""
                 placeholder="Enter a URL" onchange="updateSettingsToPlugin();">
       </div>
-      <hr>
+      <div class="sdpi-item" id="image_select">
+         <div class="sdpi-item-label">Image Select</div>
+         <select class="sdpi-item-value select" id="image_menu"
+                 onchange="updateSettingsToPlugin();"
+                 value="">
+             <option selected="selected" value="">Default</option>
+         </select>
+      </div>
       <details>
          <summary>Advanced</summary>
-
          <div class="sdpi-item">
             <div class="sdpi-item-label">Firmament URL</div>
             <input class="sdpi-item-value" id="firmament_url"
@@ -39,12 +45,14 @@
                    placeholder="Builders' Progress Report URL" onchange="updateFirmamentUrl(event.target.value);">
          </div>
       </details>
-      <!-- <div class="sdpi-item">
+      <!--
+      <div class="sdpi-item">
          <div class="sdpi-item-label">Debug</div>
          <input class="sdpi-item-value" id="debug_textbox"
                 value=""
                 placeholder="Debug" onchange="">
-      </div>-->
+      </div>
+      -->
       <script>
          // this is our global websocket, used to communicate from/to Stream Deck software
          // and some info about our plugin, as sent by Stream Deck software
@@ -94,8 +102,16 @@
                          document.getElementById('server_textbox').value = payload.Server;
                          document.getElementById('server_menu').value = payload.Server;
                      }
+
                      if (payload.OnClickUrl !== undefined) {
                          document.getElementById('button_url').value = payload.OnClickUrl;
+                     }
+                     else {
+                         document.getElementById('button_url').value = "https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report/"
+                     }
+
+                     if (payload.ImageName !== undefined) {
+                         document.getElementById('image_menu').value = payload.ImageName;
                      }
 
                      updateSettingsToPlugin();
@@ -106,10 +122,20 @@
 
                      // create dropdown menu
                      if (payload.hasOwnProperty('menu')) {
+                         // clear old menu elements
+                         var menu = document.getElementById('server_menu');
+                         menu.innerHTML = "";
+                         opt = document.createElement('OPTION');
+                         opt.disabled='disabled';
+                         opt.selected='selected';
+                         opt.hidden='hidden';
+                         menu.appendChild(opt);
+
+                         // add in new elements
                          for (region in payload.menu) {
                              for (dc in payload.menu[region]) {
                                  for (s in payload.menu[region][dc]) {
-                                     insertDropdownOption("server_menu", dc, s, s);
+                                     insertDropdownOption('server_menu', dc, payload.menu[region][dc][s], payload.menu[region][dc][s]);
                                  }
                              }
                          }
@@ -117,6 +143,18 @@
 
                      if (payload.hasOwnProperty('FirmamentUrl')) {
                          document.getElementById('firmament_url').value = payload.FirmamentUrl;
+                     }
+
+                     if (payload.hasOwnProperty('FirmamentImages')) {
+                         // clear old menu elements
+                         var menu = document.getElementById('image_menu');
+                         menu.innerHTML = "";
+                         insertDropdownOption('image_menu', '', 'Default', "");
+
+                         // add in new elements
+                         for (image in payload.FirmamentImages) {
+                             insertDropdownOption('image_menu', '', payload.FirmamentImages[image], payload.FirmamentImages[image]);
+                         }
                      }
                  }
 
@@ -130,6 +168,12 @@
                              "context": uuid,
                          };
                          websocket.send(JSON.stringify(json));
+
+                         json = {
+                             "event": "getSettings",
+                             "context": uuid,
+                         };
+                         websocket.send(JSON.stringify(json));
                      }
                  }
              };
@@ -139,7 +183,8 @@
          function updateSettingsToPlugin() {
              payload = {
                      'Server':document.getElementById('server_textbox').value,
-                     'OnClickUrl':document.getElementById('button_url').value
+                     'OnClickUrl':document.getElementById('button_url').value,
+                     'ImageName':document.getElementById('image_menu').value
              };
 
              sendValueToPlugin(payload);
@@ -228,7 +273,7 @@
              menu = document.getElementById(id);
              var el = menu;
              
-             if (optgroupID != null)  {
+             if (optgroupID != "")  {
                  if (menu.querySelector("optgroup[label='" + optgroupID + "']") == null) {
                      grp = document.createElement('OPTGROUP');
                      grp.label = optgroupID;

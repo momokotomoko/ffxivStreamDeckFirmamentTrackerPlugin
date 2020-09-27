@@ -44,6 +44,14 @@ Textbox where you can type the name of the server to track, in case it is not in
 
 A custom URL per button can be set such that when the StreamDeck button is pressed, the webpage is opened by the default browser.
 
+By default, the webpage is set to the [Ishgardian Restoration Builders' Progress Report](https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report/)
+
+`Image Select`
+
+Select a StreamDeck image from an included set. If set to Default, you can still use the StreamDeck UI to upload your own image as usual.
+
+![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish1.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish2.png) ![](Sources/com.elgato.ffxivfirmament.sdPlugin/Icons/ish3.png)
+
 `Font`
 
 Servers with longer names can use the `T` drop down menu to select a different font size.

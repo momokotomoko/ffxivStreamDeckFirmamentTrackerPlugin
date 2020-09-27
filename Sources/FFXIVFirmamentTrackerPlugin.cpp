@@ -14,32 +14,21 @@
 
 #include "Windows/FirmamentTrackerHelper.h"
 #include "Windows/CallBackTimer.h"
+#include "Windows/StreamDeckImageManager.h"
 
 #include "Common/ESDConnectionManager.h"
 
 //#define LOGGING
 
-
 FFXIVFirmamentTrackerPlugin::FFXIVFirmamentTrackerPlugin()
 {
-	mFirmamentTrackerHelper = new FirmamentTrackerHelper();
-	mTimer = new CallBackTimer();
 }
 
 FFXIVFirmamentTrackerPlugin::~FFXIVFirmamentTrackerPlugin()
 {
-	if(mTimer != nullptr)
+	if(mTimer.get() != nullptr)
 	{
 		mTimer->stop();
-		
-		delete mTimer;
-		mTimer = nullptr;
-	}
-	
-	if(mFirmamentTrackerHelper != nullptr)
-	{
-		delete mFirmamentTrackerHelper;
-		mFirmamentTrackerHelper = nullptr;
 	}
 }
 
@@ -156,6 +145,10 @@ FFXIVFirmamentTrackerPlugin::contextMetaData_t FFXIVFirmamentTrackerPlugin::read
 	{
 		data.onClickUrl = payload["OnClickUrl"].get<std::string>();
 	}
+	if (payload.find("ImageName") != payload.end())
+	{
+		data.imageName = payload["ImageName"].get<std::string>();
+	}
 	return data;
 }
 
@@ -172,12 +165,18 @@ void FFXIVFirmamentTrackerPlugin::WillAppearForAction(const std::string& inActio
 	}
 	
 	mVisibleContextsMutex.lock();
-	// if just launched, try to grab any global settings
+	// if just launched, try to grab any global settings and load images
 	if (!isInit)
 	{
 		mConnectionManager->GetGlobalSettings();
 		isInit = true;
+
+		// load images
+		mStreamDeckImageManager->loadAllPng();
 	}
+
+	// set plugin image
+	mConnectionManager->SetImage(mStreamDeckImageManager->getImage(data.imageName), inContext, 0);
 
 	// if this is the first plugin to be displayed, boot up the timers
 	bool isEmpty = mContextServerMap.empty();
@@ -232,13 +231,16 @@ void FFXIVFirmamentTrackerPlugin::SendToPlugin(const std::string& inAction, cons
 	if (mContextServerMap.find(inContext) != mContextServerMap.end())
 	{
 		// updated stored settings
-		mContextServerMap.at(inContext) = readJsonIntoMetaData(inPayload);
+		contextMetaData_t metadata = readJsonIntoMetaData(inPayload);
+		mContextServerMap.at(inContext) = metadata;
+		mConnectionManager->SetImage(mStreamDeckImageManager->getImage(metadata.imageName), inContext, 0);
 	}
 	else
 	{
 		mConnectionManager->LogMessage("Error: SendToPlugin: could not find stored context: " + inContext + "\nPayload:\n" + inPayload.dump(4));
 		mConnectionManager->LogMessage(inContext);
 	}
+
 	// update UI after changing server for this app
 	this->UpdateUI(inContext);
 
@@ -263,16 +265,19 @@ void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload
 		}
 	}
 
-	// do a test read and grab the server hierarchy here
+	// do a test read, reload global settings
 	if (mFirstRead) // only do this once per new url
 	{
+		json j;
+		j["FirmamentUrl"] = mUrl;
+
+		// send hierarchy
 		bool isSuccess = mFirmamentTrackerHelper->ReadFirmamentHTML(mUrl);
 		if (isSuccess)
 		{
 			if (mFirmamentTrackerHelper->isHtmlGood())
 			{
-				// generate the hierarcchy and send as global setting
-				json j;
+				// generate the hierarchy and send as global setting
 				std::vector<FirmamentTrackerHelper::restorationRegion> serverHierarchy = mFirmamentTrackerHelper->getServerHierarchy();
 				for (const auto region : serverHierarchy)
 				{
@@ -280,13 +285,11 @@ void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload
 					{
 						for (const auto server : dc.second.servers)
 						{
-							j["menu"][region.name][dc.first][server];
+							j["menu"][region.name][dc.first] += server;
 						}
 					}
 				}
-				j["FirmamentUrl"] = mUrl;
-
-				mConnectionManager->SetGlobalSettings(j);
+				
                 #ifdef LOGGING
 				mConnectionManager->LogMessage(j.dump(4));
                 #endif
@@ -294,6 +297,15 @@ void FFXIVFirmamentTrackerPlugin::DidReceiveGlobalSettings(const json& inPayload
 				mFirstRead = false;
 			}
 		}
+
+		// send list of images
+		std::vector <std::string> imageList = mStreamDeckImageManager->getAvailableImages();
+		for (const auto& image : imageList)
+		{
+			j["FirmamentImages"] += image;
+		}
+
+		mConnectionManager->SetGlobalSettings(j);
 	}
 
 	// send reload command now that global settings are sent
