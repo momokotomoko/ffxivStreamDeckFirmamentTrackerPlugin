@@ -114,7 +114,7 @@ const FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::
 FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseServerData(tree<htmlcxx::HTML::Node>::post_order_iterator liIt,
 	tree<htmlcxx::HTML::Node>& dom)
 {
-	restorationServerStatus_t status;
+	restorationServerStatus_t status = {};
 
 	// parse world name
 	auto worldNameIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "world_name", liIt.begin(), liIt.end());
@@ -131,6 +131,7 @@ FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseS
 	if (barIt == liIt.end()) return status;
 	barIt->parseAttributes();
 	std::string barValue = barIt->attribute("style").second;
+	std::string barValueId = barIt->attribute("id").second;
 
 	// parse text
 	auto textIt = htmlcxxutils::htmlcxxFindNextTag("p", barIt.end(), liIt.end());
@@ -143,7 +144,7 @@ FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseS
 	// check for completion string
 	const std::string completionWord = "Works Complete";
 	std::size_t completionPos = barValue.find(completionWord);
-	if (completionPos != std::string::npos)
+	if (completionPos != std::string::npos || barValueId.length() > 0)
 	{
 		progress = "Completed";
 		progressF = 100.0;
