@@ -127,24 +127,24 @@ FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseS
 	std::string level = dom.child(levelIt, 0)->text();
 
 	// parse bar value
-	auto barIt = htmlcxxutils::htmlcxxFindNextTag("span", levelIt.end(), liIt.end());
+	auto barIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "bar", worldNameIt.end(), liIt.end());
 	if (barIt == liIt.end()) return status;
-	barIt->parseAttributes();
-	std::string barValue = barIt->attribute("style").second;
-	std::string barValueId = barIt->attribute("id").second;
+	std::string barValue;
+	for (auto it = barIt; it != barIt.end(); it++)
+		barValue += it->text();
 
 	// parse text
-	auto textIt = htmlcxxutils::htmlcxxFindNextTag("p", barIt.end(), liIt.end());
-	if (textIt == liIt.end()) return status;
-	std::string text = dom.child(textIt, 0)->text();
+	auto textIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "text", worldNameIt.end(), liIt.end());
+	std::string text = "";
+	if (textIt != liIt.end()) text = dom.child(textIt, 0)->text();
 
 	// convert bar value to progress
 	std::string progress = "nan";
 	float progressF = 0.0;
 	// check for completion string
-	const std::string completionWord = "Works Complete";
+	const std::string completionWord = "Completed";
 	std::size_t completionPos = barValue.find(completionWord);
-	if (completionPos != std::string::npos || barValueId.length() > 0)
+	if (completionPos != std::string::npos)
 	{
 		progress = "Completed";
 		progressF = 100.0;

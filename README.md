@@ -1,5 +1,9 @@
 # FFXIV Firmament Tracker Plugin for the Elgato StreamDeck
 
+Note: This application is now obsolete, as all the firmament progress in every server has now been completed:
+[Ishgardian Restoration Builders' Progress Report](https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report/)
+However, if in the future fresh servers are added where the restoration has not been completed, then this plugin can still be used.
+
 StreamDeck is an external LCD key macro device that allows the installation of plugins to improve productivity.
 
 Final Fantasy XIV is a MMORPG video game.
@@ -76,4 +80,4 @@ The source code can be found in the Sources folder.
 
 [Twitter](https://twitter.com/momoko_tomoko)
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=886JLXQKS39U4&currency_code=USD&source=url)
+[![buymeacoffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/momokoffxiv)
