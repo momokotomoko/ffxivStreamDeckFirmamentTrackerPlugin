@@ -2,6 +2,7 @@
 
 Note: This application is now obsolete, as all the firmament progress in every server has now been completed:
 [Ishgardian Restoration Builders' Progress Report](https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/builders_progress_report/)
+
 However, if in the future fresh servers are added where the restoration has not been completed, then this plugin can still be used.
 
 StreamDeck is an external LCD key macro device that allows the installation of plugins to improve productivity.
