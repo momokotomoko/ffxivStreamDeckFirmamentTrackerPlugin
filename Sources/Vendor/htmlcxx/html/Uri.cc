@@ -1,7 +1,7 @@
 #include "Uri.h"
 
 #include "wincstring.h"
-#include <sstream>
+#include <strstream>
 #include <cstdlib>
 #include <cassert>
 #include "tld.h"

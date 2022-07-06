@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
-#include <sstream>
+#include <strstream>
 #include "Uri.h"
 
 #include "utils.h"
@@ -509,17 +509,17 @@ namespace htmlcxx {
 		string __serialize_gml(const tree<HTML::Node> &tr, tree<HTML::Node>::iterator it, tree<HTML::Node>::iterator end, unsigned int parent_id, unsigned int& label) {
 
 			using namespace std;
-			ostringstream ret;
+			ostrstream ret;
 			tree<HTML::Node>::sibling_iterator sib = tr.begin(it);
 			while(sib != tr.end(it)) {
-				++label;
-				ret << "node [ id " << label << "\n label \"" << label << "\"\n]\n";
+				ret << "node [ id " << ++label << "\n label \"" << label << "\"\n]\n";
 				ret << "edge [ \n source " << parent_id << "\n target " << label << "\n]" << endl;
 				ret << __serialize_gml(tr, sib, end, label, label);
 				++sib;
 			}	
 			ret << ends;
 			string str = ret.str();
+			ret.freeze(0);
 			return str;
 		}
 

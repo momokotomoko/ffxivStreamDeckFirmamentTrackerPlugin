@@ -4,13 +4,13 @@
 #include "css_lex.h"
 #include "parser.h"
 
+#define YYPARSE_PARAM yyparam
 #define YYERROR_VERBOSE 1
 //#define YYDEBUG 1
 
 %}
 
-%parse-param {void *yyparam}
-%pure-parser
+%pure_parser
 
 %union {
 	char *lexeme;
@@ -21,19 +21,6 @@
 	int pseudo_class;
 	int pseudo_element;
 }
-
-%{
-
-int yylex(YYSTYPE *lvalp);
-
-int yyerror(void *yyparam, const char *s) {
-#if YYDEBUG
-	fprintf(stderr, "Error: %s\n", s);
-#endif
-	return 0;
-}
-
-%}
 
 %token IMPORT_SYM
 %token IMPORTANT_SYM
@@ -583,6 +570,13 @@ hexcolor
 ;
 
 %%
+
+int yyerror(char *s) {
+#if YYDEBUG
+	fprintf(stderr, "Error: %s\n", s);
+#endif
+	return 0;
+}
 
 struct selector_list_t* css_parse(const char *buffer, int buf_len) {
 	struct selector_list_t *ret = NULL;

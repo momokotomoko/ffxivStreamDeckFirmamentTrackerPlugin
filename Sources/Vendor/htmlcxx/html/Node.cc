@@ -21,14 +21,14 @@ void Node::parseAttributes()
 	++ptr;
 
 	// Skip initial blankspace
-	while (*ptr && isspace(*ptr)) ++ptr;
+	while (isspace(*ptr)) ++ptr;
 
 	// Skip tagname
-	if (!*ptr || !isalpha(*ptr)) return;
-	while (*ptr && !isspace(*ptr) && *ptr != '>') ++ptr;
+	if (!isalpha(*ptr)) return;
+	while (!isspace(*ptr) && *ptr != '>') ++ptr;
 
 	// Skip blankspace after tagname
-	while (*ptr && isspace(*ptr)) ++ptr;
+	while (isspace(*ptr)) ++ptr;
 
 	while (*ptr && *ptr != '>') 
 	{
