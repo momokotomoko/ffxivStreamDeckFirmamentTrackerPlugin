@@ -118,25 +118,25 @@ FirmamentTrackerHelper::restorationServerStatus_t FirmamentTrackerHelper::parseS
 
 	// parse world name
 	auto worldNameIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "world_name", liIt.begin(), liIt.end());
-	if (worldNameIt == liIt.end()) return status;
+	if (worldNameIt == htmlcxxutils::pre_order_it(liIt.end())) return status;
 	std::string worldName = dom.child(worldNameIt, 0)->text();
 
 	// parse level
 	auto levelIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "level", worldNameIt.end(), liIt.end());
-	if (levelIt == liIt.end()) return status;
+	if (levelIt == htmlcxxutils::pre_order_it(liIt.end())) return status;
 	std::string level = dom.child(levelIt, 0)->text();
 
 	// parse bar value
 	auto barIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "bar", worldNameIt.end(), liIt.end());
-	if (barIt == liIt.end()) return status;
+	if (barIt == htmlcxxutils::pre_order_it(liIt.end())) return status;
 	std::string barValue;
-	for (auto it = barIt; it != barIt.end(); it++)
+	for (auto it = barIt; it != htmlcxxutils::pre_order_it(barIt.end()); it++)
 		barValue += it->text();
 
 	// parse text
 	auto textIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "text", worldNameIt.end(), liIt.end());
 	std::string text = "";
-	if (textIt != liIt.end()) text = dom.child(textIt, 0)->text();
+	if (textIt != htmlcxxutils::pre_order_it(liIt.end())) text = dom.child(textIt, 0)->text();
 
 	// convert bar value to progress
 	std::string progress = "nan";
@@ -195,7 +195,7 @@ bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationR
 
 	if (regionIt == dom.end()) return false;
 
-	for (auto subRegionIt = regionIt; subRegionIt != regionIt.end(); subRegionIt++)
+	for (auto subRegionIt = regionIt; subRegionIt != htmlcxxutils::pre_order_it(regionIt.end()); subRegionIt++)
 	{
 		if (subRegionIt->isTag() && htmlcxxutils::strCaseCmp(subRegionIt->tagName(), "A"))
 		{
@@ -225,7 +225,7 @@ bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationR
 
 		// go through the div looking for the attribute "report-dc_name" for the dc's
 		for (auto dcIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "report-dc_name", nextRegionIt.begin(), nextRegionIt.end());
-			dcIt != nextRegionIt.end();
+			dcIt != htmlcxxutils::pre_order_it(nextRegionIt.end());
 			dcIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "report-dc_name", dcIt.begin(), nextRegionIt.end()))
 		{
 			std::string dcName = dom.child(dcIt, 0)->text();
@@ -239,11 +239,11 @@ bool FirmamentTrackerHelper::parseRestorationServerHtml(std::vector<restorationR
 			// The worlds in the dc are listed under the tag with class "report-world_list".
 			// They are stored under the "li" tags
 			auto worldListIt = htmlcxxutils::htmlcxxFindNextAttribute("class", "report-world_list", dcIt.begin(), nextRegionIt.end());
-			if (worldListIt == nextRegionIt.end()) return false;
+			if (worldListIt == htmlcxxutils::pre_order_it(nextRegionIt.end())) return false;
 
 			// go through each "li" tag and parse out the info we need
 			for (auto liIt = htmlcxxutils::htmlcxxFindNextTag("li", worldListIt.begin(), worldListIt.end());
-				liIt != worldListIt.end();
+				liIt != htmlcxxutils::pre_order_it(worldListIt.end());
 				liIt = htmlcxxutils::htmlcxxFindNextTag("li", liIt.end(), worldListIt.end()))
 			{
 				restorationServerStatus_t status = parseServerData(liIt, dom);

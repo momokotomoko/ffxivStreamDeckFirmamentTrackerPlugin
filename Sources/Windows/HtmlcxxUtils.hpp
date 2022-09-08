@@ -83,4 +83,17 @@ namespace htmlcxxutils
 		}
 		return it;
 	}
+
+	/*
+		@brief Cast to pre_order_iterator
+
+		@param[in] iterator iterator input
+
+		@return pre_order_iterator
+	*/
+	static tree<htmlcxx::HTML::Node>::pre_order_iterator pre_order_it(
+		tree<htmlcxx::HTML::Node>::iterator it)
+	{
+		return it;
+	}
 }

@@ -25,7 +25,7 @@ StreamDeckImageManager::StreamDeckImageManager(const std::string & path)
 std::set<std::string> StreamDeckImageManager::getAvailablePngImages()
 {
 	std::set<std::string> imageNames;
-	for (const auto& entry : std::experimental::filesystem::directory_iterator(mPath))
+	for (const auto& entry : std::filesystem::directory_iterator(mPath))
 		if (entry.path().extension().string() == ".png")
 			imageNames.insert(entry.path().filename().string());
 
